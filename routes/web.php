@@ -52,6 +52,19 @@ use App\Http\Controllers\LeaveController;
 use Database\Seeders\OfficeExpenseTypesSeeder;
 use App\Http\Controllers\LoanInterestController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\InterestPayment;
+use App\Http\Controllers\EmployeeSalaryController;
+use App\Http\Controllers\AttendanceReportController;
+use App\Http\Controllers\ExpensesReportController;
+use App\Http\Controllers\LeaveReportController;
+use App\Http\Controllers\CustomerReportController;
+use App\Http\Controllers\TeleCallerController;
+use App\Http\Controllers\TelecallerFollowController;
+use App\Http\Controllers\FundController;
+use App\Http\Controllers\OtherBankLoanController;
+use App\Http\Controllers\TodayBusinessReport;
+use App\Models\OtherBankLoan;
+
 // Main Page Route
 Route::get('/dashboard', [Analytics::class, 'index'])->name('dashboard-analytics');
 Route::get('/', [LoginBasic::class, 'index'])->name('auth-login-basic');
@@ -119,14 +132,17 @@ Route::get('/form/layouts-horizontal', [HorizontalForm::class, 'index'])->name('
 Route::get('/tables/basic', [TablesBasic::class, 'index'])->name('tables-basic');
 
 //Users
-Route::get('/users', [UserController::class, 'index'])->name('users');
-Route::get('/users/create', [UserController::class, 'create'])->name('users/create');
-#Route::post('/users/store', [UserController::class, 'store'])->name('users/store');
 Route::resource('users', UserController::class);
+Route::get('/users', [UserController::class, 'index'])->name('users.index');
+Route::get('/users/create', [UserController::class, 'create'])->name('users/create');
+Route::post('/users/store', [UserController::class, 'store'])->name('users/store');
 Route::delete('/users/softDelete/{id}', [UserController::class, 'softDelete'])->name('users.softDelete');
 Route::get('/get-location-count', [UserController::class, 'getLocationCount']);
 Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+
+
+Route::any('/logout', [UserController::class, 'logout'])->name('logout');
 
 // Customer management
 Route::resource('customers', CustomerManagement::class);
@@ -135,7 +151,9 @@ Route::get('/customers/show/{id}', [CustomerManagement::class, 'show'])->name('c
 Route::get('/customers/create', [CustomerManagement::class, 'create'])->name('customers/create');
 Route::delete('/customers/softDelete/{id}', [CustomerManagement::class, 'softDelete'])->name('customers.softDelete');
 Route::get('/customers/{id}/edit', [CustomerManagement::class, 'edit'])->name('customers.edit');
+Route::post('/customers/store', [CustomerManagement::class, 'store'])->name('customers.store');
 
+Route::get('customer_report', [CustomerReportController::class, 'index'])->name('customers.report.index');
 
 //Loan
 // Customer management
@@ -146,23 +164,35 @@ Route::get('/customers/create', [CustomerManagement::class, 'create'])->name('cu
 // Leave Management
 Route::resource('leaves', LeaveController::class);
 
-
+Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves.index');
 Route::post('/leave/approve/{id}', [LeaveController::class, 'approve'])->name('leave.approve');
 Route::post('/leave/cancel/{id}', [LeaveController::class, 'cancel'])->name('leave.cancel');
 Route::post('/leave/withdraw/{id}', [LeaveController::class, 'withdraw'])->name('leave.withdraw');
 Route::post('/leave/remove/{id}', [LeaveController::class, 'remove'])->name('leave.remove');
+Route::post('/leave/create', [LeaveController::class, 'create'])->name('leave.create');
+
+Route::get('leave_report', [LeaveReportController::class, 'index'])->name('leaves.report.index');
 
 // Expensses
 Route::resource('expenses', ExpenseController::class);
 // routes/web.php
+Route::any('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
 Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 Route::put('/expenses/{id}', [ExpenseController::class, 'update'])->name('expenses.update');
+Route::post('/expenses/store', [ExpenseController::class, 'store'])->name('expenses.store');
+
+Route::get('expenses_report', [ExpensesReportController::class, 'index'])->name('expenses.report.index');
+
 
 //Attendace
-
-Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+Route::resource('attendance', AttendanceController::class);
+Route::any('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+#Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
 Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
 Route::post('/attendance/paidsalary', [AttendanceController::class, 'paidsalary'])->name('attendance.paidsalary');
+// Attendance Reports
+Route::get('attendace_report', [AttendanceReportController::class, 'index'])->name('attendance.report.index');
+Route::get('/send_follow_up_email', [AttendanceController::class, 'sendFollowUpEmail'])->name('send.followUpEmail');
 
 
 // Loan Interest Setting
@@ -206,4 +236,40 @@ Route::any('/customer_details', [LoanController::class, 'customer_details'])->na
 Route::post('/save-loan', [LoanController::class, 'saveLoan']);
 Route::post('/update-loan-status', [LoanController::class, 'updateLoanStatus'])->name('updateLoanStatus');
 Route::post('/update-dispatch-loan-status', [LoanController::class, 'updateLoanDispatchStatus'])->name('updateLoanDispatchStatus');
-Route::post('/interest-payment', [LoanInterestController::class, 'store'])->name('interest.payment.store');
+Route::any('/interest-payment', [LoanInterestController::class, 'store'])->name('interest.payment.store');
+
+
+Route::any('/interstlist/{locationId}', [InterestPayment::class, 'index'])->name('loans.customer_interest_list');
+
+Route::any('/interst_invoice/{loan_id}', [InterestPayment::class, 'interest_invoice'])->name('loans.interest_invoice');
+
+
+// Salary Routes
+Route::resource('employee_salaries', EmployeeSalaryController::class);
+
+//Tele Caller Route
+Route::get('telecaller_report', [TeleCallerController::class, 'index'])->name('telecaller.index');
+Route::post('/telecaller/store', [TelecallerFollowController::class, 'store'])->name('telecaller.store');
+Route::get('/telecaller/follow-up', [TelecallerFollowController::class, 'showFollowUpModal'])->name('telecaller.showFollowUpModal');
+
+
+// Funds Routes
+
+Route::resource('funds', FundController::class);
+Route::any('/funds', [FundController::class, 'index'])->name('funds.index');
+Route::post('/funds/store', [FundController::class, 'store'])->name('funds.store');
+Route::delete('/funds/softDelete/{id}', [FundController::class, 'destroy'])->name('funds.softDelete');
+
+
+// Other Bank Loan
+Route::resource('other_loans', OtherBankLoanController::class);
+Route::any('/other_loans', [OtherBankLoanController::class, 'index'])->name('other_loans.index');
+Route::get('/other_loans/create', [OtherBankLoanController::class, 'create'])->name('other_loans.create');
+Route::get('/other_loans/get-loan-numbers/{customer_id}', [OtherBankLoanController::class, 'getLoanNumbers'])->name('other_loans.get-loan-numbers');
+Route::post('/other-bank-save-loan', [OtherBankLoanController::class, 'store'])->name('other_loans.store');
+Route::any('/other-bank-interest', [OtherBankLoanController::class, 'interestReminder'])->name('other_loans.interestReminder');
+
+
+//Today Business Report
+Route::resource('today_business', TodayBusinessReport::class);
+Route::any('/today_business', [TodayBusinessReport::class, 'index'])->name('today_business.index');

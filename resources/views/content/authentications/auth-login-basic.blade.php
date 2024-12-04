@@ -30,7 +30,7 @@
             @csrf
             <div class="mb-3">
               <label for="email" class="form-label">Username</label>
-              <input type="text" class="form-control" id="email" name="username" id="username" placeholder="Enter your email or username" autofocus>
+              <input type="text" class="form-control" id="email" name="username" id="username" placeholder="Enter your username" autofocus>
             </div>
             <div class="mb-3 form-password-toggle">
               <div class="d-flex justify-content-between">

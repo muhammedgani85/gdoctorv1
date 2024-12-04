@@ -6,7 +6,7 @@
 <script src="{{asset('assets/js/form-basic-inputs.js')}}"></script>
 @endsection
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- Include other styles here -->
 @section('content')
 <h4 class="py-0 mb-4">
@@ -116,8 +116,9 @@
             <th>Cust.Name</th>
             <th>Location</th>
             <th>Loan Amount</th>
-            <th>Type</th>
+           <!--  <th>Type</th> -->
             <th>Int.Scheme</th>
+            <th>Int / Month</th>
             <th>L.Date</th>
             <th>Status</th>
             <th>Actions</th>
@@ -132,8 +133,10 @@
           <td>{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}</td>
           <td>{{ $loan->location->branch_name }}</td>
           <td>{{ $loan->total_loan_amount }}</td>
-          <td>{{ $loan->loanType->loan_types }}</td>
+          <!-- <td>{{ $loan->loanType->loan_types }}</td> -->
+
           <td>{{ $loan->interest_month." - Month" }}</td>
+          <td>{{   number_format((float)$loan->total_interest_amount / $loan->interest_month, 2, '.', '');  }}</td>
           <td>{{ $loan->created_at }}</td>
           @php
     switch ($loan->status) {
@@ -165,13 +168,22 @@
 
           <td>
 
-          <a href="javascript:void(0);" data-id="{{ $loan->loan_number }}"  title="view"><i class='bx bx-show'></i></i></a>
-          <a href="http://127.0.0.1:8000/customers/2/edit" title="Interest List"><i class='bx bx-list-ol'></i></a>
-          <a href="http://127.0.0.1:8000/customers/2/edit" title="Pay Interest"><i class='bx bx-rupee' style="color:red;" ></i></a>
+   @if($loan->status!='Rejected')
 
-          <a href="javascript:void(0);" data-id="{{ $loan->loan_number }}" class="btn btn-primary pay-interest" title="Pay Interest">
+          <!-- <a href="javascript:void(0);" data-id="{{ $loan->loan_number }}"  title="view"><i class='bx bx-show'></i></i></a>  -->
+          <a href="{{ route('loans.customer_interest_list', $loan->loan_number) }}" title="Interest List"><i class='bx bx-list-ol'></i></a>
+          <!-- <a href="http://127.0.0.1:8000/customers/2/edit" title="Pay Interest"><i class='bx bx-rupee' style="color:red;" ></i></a> -->
+
+  <a href="javascript:void(0);"
+     class="pay-interest"
+     data-id="{{ $loan->loan_number }}"
+     data-start-date="{{ date('Y-m-d',strtotime($loan->created_at)) }}"
+     data-interest-amount="{{ number_format((float)$loan->total_interest_amount / $loan->interest_month, 2, '.', ''); }}"
+     title="Pay Interest">
     <i class='bx bx-rupee' style="color:red;"></i>
-</a>
+  </a>
+  @endif
+
 
 
           </td>
@@ -202,12 +214,12 @@
 
 <!-- Pay Interest Modal -->
 <!-- Modal -->
-<div class="modal fade" id="interestPaymentModal" tabindex="-1" role="dialog" aria-labelledby="interestPaymentModalLabel" aria-hidden="true">
+<div class="modal fade" id="interestPaymentModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="interestPaymentModalLabel">Pay Loan Interest</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <h5 class="modal-title" id="exampleModalLabel">Interest Payment</h5>
+        <button type="button"  class="close" data-dismiss="modal">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -229,30 +241,12 @@
                 </tr>
               </thead>
               <tbody>
-                <!-- Dynamically generate rows for each month -->
-                <tr>
-                  <td>January</td>
-                  <td>500</td>
-                  <td>
-                    <input type="radio" name="payment_month" value="1" required>
-                  </td>
-                </tr>
-                <tr>
-                  <td>February</td>
-                  <td>500</td>
-                  <td>
-                    <input type="radio" name="payment_month" value="2">
-                  </td>
-                </tr>
-                <!-- Add more months as needed -->
+                <!-- Rows will be dynamically added here by JavaScript -->
               </tbody>
             </table>
           </div>
 
-          <div class="form-group">
-            <label for="paymentAmount">Payment Amount</label>
-            <input type="number" class="form-control" id="paymentAmount" name="payment_amount" required>
-          </div>
+          <input type="hidden" class="form-control" id="paymentAmount" name="payment_amount" required>
 
           <div class="form-group">
             <label for="paymentType">Payment Method</label>
@@ -272,6 +266,7 @@
     </div>
   </div>
 </div>
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.css">
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
@@ -346,27 +341,123 @@
   });
 
 
-  $(document).ready(function() {
+
+</script>
+
+<script>
+$(document).ready(function() {
     $('.pay-interest').on('click', function() {
-        var loanNumber = $(this).data('id'); // Get loan number from the clicked element
+        var loanNumber = $(this).data('id'); // Get loan number from data-id
+        var loanStartDate = $(this).data('start-date'); // Get loan start date from data-start-date
+        var interestAmount = $(this).data('interest-amount'); // Get interest amount
 
         // Populate loan number in the modal
         $('#loanNumber').val(loanNumber);
+
+        // Call function to dynamically generate the months based on loan start date
+        generateMonths(loanStartDate, interestAmount);
 
         // Open the modal
         $('#interestPaymentModal').modal('show');
     });
 
+    // Function to generate months based on loan start date
+    function generateMonths(startDate, interestAmount) {
+        var start = new Date(startDate); // Convert to Date object
+        var today = new Date(); // Get current date
+
+        var tbody = $('#interestPaymentForm tbody');
+        tbody.empty(); // Clear previous entries
+
+        var interestAmount = interestAmount; // You can make this dynamic
+        var monthNames = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+
+        while (start <= today) {
+            var monthName = monthNames[start.getMonth()]; // Get month name
+            var monthNumber = start.getMonth() + 1; // Get month number (1-12)
+
+            // Append each month as a new row
+            tbody.append(`
+              <tr>
+                <td>${monthName} ${start.getFullYear()}</td>
+                <td>${interestAmount}</td>
+                <td><input type="radio" name="payment_month" value="${monthNumber}" data-interest="${interestAmount}"required></td>
+              </tr>
+            `);
+
+            // Move to the next month
+            start.setMonth(start.getMonth() + 1);
+        }
+    }
+
+
+
+
+    // Payment Amount
+
+   // Capture the interest amount when a month is selected
+   $(document).ready(function() {
+    // Event handler for when a month is selected
+    $(document).on('change', 'input[name="payment_month"]', function() {
+        var interestAmount = $(this).data('interest');  // Get interest amount from the selected radio button
+
+        // Check if interestAmount exists
+        if (interestAmount) {
+            $('#paymentAmount').val(interestAmount);  // Set the paymentAmount input to the selected interest amount
+            console.log('Interest Amount Set:', interestAmount);
+        } else {
+            alert("Interest amount not available for this month.");
+        }
+    });
+
+    // On form submit, check if paymentAmount is set
     $('#interestPaymentForm').on('submit', function(e) {
-        e.preventDefault();
+        e.preventDefault();  // Prevent form submission for now
 
-        // Add logic here to handle form submission, such as sending an AJAX request
-        // to save the payment details to the backend.
+        var paymentAmount = $('#paymentAmount').val();
+        console.log('Payment Get : ' +paymentAmount);
+        if (!paymentAmount) {
+            alert("Please select a valid month to set the payment amount.");
+            return;  // Stop form submission if payment amount is not set
+        }
 
-        alert('Form submitted!');
-        $('#interestPaymentModal').modal('hide');
+        // Collect form data (assuming other fields are validated)
+        var formData = {
+        loan_number: $('#loanNumber').val(),
+        payment_month: $('input[name="payment_month"]:checked').val(),
+        payment_amount: $('#paymentAmount').val(),
+        payment_method: $('#paymentType').val(),
+        _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+        };
+
+        // AJAX request to submit the form
+          $.ajax({
+          url: '{{ route("interest.payment.store", "") }}',
+          method: 'POST',
+          data: formData,
+          success: function(response) {
+          if (response.success) {
+            alert(response.success); // Display success message
+            $('#interestPaymentModal').modal('hide'); // Close modal
+            location.reload(); // Optionally reload page or update UI
+          }
+          },
+          error: function(xhr) {
+          console.log(xhr.responseText); // Log errors if any
+          }
+          });
     });
 });
+
+});
+
+</script>
+
+
+<script>
+
+
 </script>
 
 

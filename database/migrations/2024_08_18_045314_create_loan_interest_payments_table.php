@@ -13,16 +13,17 @@ return new class extends Migration
     {
         Schema::create('loan_interest_payments', function (Blueprint $table) {
           $table->id();
-          $table->unsignedBigInteger('loan_id'); // Foreign key to loans table
-          $table->unsignedBigInteger('loan_interest_id'); // Foreign key to loan_interest table
-          $table->decimal('payment_amount', 15, 2); // Amount paid
-          $table->date('payment_date'); // Date of payment
-          $table->string('payment_method'); // Method of payment (e.g., cash, bank transfer)
+
+          $table->string('loan_id')->nullable();
+          $table->integer('month'); // Month number (1 = January, etc.)
+          $table->decimal('interest_amount', 8, 2);
+          $table->string('payment_method');
+          $table->string('user_id')->nullable();
           $table->timestamps();
           $table->softDeletes();
 
           // Define the foreign key constraints
-          $table->foreign('loan_id')->references('id')->on('loans')->onDelete('cascade');
+          //$table->foreign('loan_id')->references('id')->on('loans')->onDelete('cascade');
 
         });
     }

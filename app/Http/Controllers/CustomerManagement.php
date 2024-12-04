@@ -39,7 +39,7 @@ class CustomerManagement extends Controller
         // Count customers added this month
         $monthCustomers = $customers->where('created_at', '>=', Carbon::now()->startOfMonth())->count();
 
-        return view('content.customermanagement.dashboard', compact('customers', 'todayCustomers', 'weekCustomers', 'monthCustomers'));
+        return view('content.customermanagement.index', compact('customers', 'todayCustomers', 'weekCustomers', 'monthCustomers'));
     }
 
     /**

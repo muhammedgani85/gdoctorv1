@@ -8,14 +8,46 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use DB;
 
 class ExpenseController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+
+       // Date Range Filter (if applied)
+    $startDate = $request->get('start_date') ? Carbon::parse($request->get('start_date')) : null;
+    $endDate = $request->get('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+    $query = DB::table('expenses')
+        ->join('office_expense_types', 'expenses.expense_type_id', '=', 'office_expense_types.id')
+        ->select('expenses.*', 'office_expense_types.name as type_name')
+        ->whereNull('expenses.deleted_at');
+
+    // Filter by date range if provided
+    if ($startDate && $endDate) {
+        $query->whereBetween('expenses.date', [$startDate, $endDate]);
+    } else {
+        // Default filter: Today's expenses
+        $query->whereDate('expenses.date', Carbon::today());
+    }
+
+    $expenses = $query->get();
+
+    // Calculate summaries
+    $todayExpenses = DB::table('expenses')->whereDate('date', Carbon::today())->whereNull('expenses.deleted_at')->sum('amount');
+    $yesterdayExpenses = DB::table('expenses')->whereDate('date', Carbon::yesterday())->whereNull('expenses.deleted_at')->sum('amount');
+    $weekExpenses = DB::table('expenses')->whereBetween('date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->whereNull('expenses.deleted_at')->sum('amount');
+    $monthExpenses = DB::table('expenses')->whereMonth('date', Carbon::now()->month)->whereNull('expenses.deleted_at')->sum('amount');
+
+    return view('content.expenses.index', compact('expenses', 'todayExpenses', 'yesterdayExpenses', 'weekExpenses', 'monthExpenses'));
+
+
+
+
     }
 
     /**
@@ -38,7 +70,6 @@ class ExpenseController extends Controller
      */
     public function store(Request $request)
     {
-
 
         try {
 
