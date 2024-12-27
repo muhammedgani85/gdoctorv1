@@ -52,6 +52,10 @@ return new class extends Migration
             $table->string('gpay_no')->nullable();
             $table->foreignId('location_id')->constrained('branches');
             $table->enum('status', ['Active', 'InActive'])->default('Active');
+            $table->integer('state_id')->nullable();
+            $table->integer('district_id')->nullable();
+            $table->integer('city_id')->nullable();
+            $table->integer('pincode')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

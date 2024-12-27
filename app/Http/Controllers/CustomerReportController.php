@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Branch;
+use App\Models\Cities;
 use App\Models\Customer;
+use App\Models\Pincode;
+use App\Models\Sandha;
+use App\Models\State;
 use App\Models\User;
 
 class CustomerReportController extends Controller
@@ -14,6 +18,7 @@ class CustomerReportController extends Controller
      */
     public function index(Request $request)
     {
+
         // Get session data for the current user's location and role
         $location = session('user_data')->location;
         $role = session('user_data')->role;
@@ -22,33 +27,39 @@ class CustomerReportController extends Controller
         $fromDate = $request->input('from_date', now()->startOfMonth()->toDateString());
         $toDate = $request->input('to_date', now()->endOfMonth()->toDateString());
         $status = $request->input('status');
+        $city_id = $request->input('city');
+        $pincode_id = $request->input('pincode');
         $branchId = $request->input('branch_id');
 
+        $city = Cities::where('status', 'Active')->get();
+        $states = State::where('status', 'Active')->get();
+        $pincode = Pincode::where('status', 'Active')->get();
+        $sandhas = Sandha::where('status', 'Active')->get();
        // dd($request->all());
 
         // Retrieve all branches for the dropdown
         $branches = Branch::all();
+        $ref_customer = Customer::all();
 
         // Initialize the customer query with default filters
-        $query = Customer::with('branch')
+        $query = Customer::with('branch','customerpincode','customercity')
                         ->whereBetween('created_at', [$fromDate, $toDate]);
 
-        // Location-based filter
-        if (in_array($role, [1, 8, 10])) { // Only specific roles can view all branches
-            // Check if branch filter is selected
-            if ($request->filled('branch_id') && $branchId !== 'all') {
-                // Filter by selected branch
-                $query->where('location_id', $branchId);
-            }
-            // If 'All' is selected, do not apply any branch filter
-        } else {
-            // Restrict to the user's default location for other roles
-            //$query->where('location_id', $location);
-        }
+
 
         // Apply status filter if provided
         if ($request->filled('status')) {
             $query->where('status', $status);
+        }
+        if ($request->filled('city')) {
+          $query->where('city', $city_id);
+        }
+        if ($request->filled('pincode')) {
+          $query->where('pincode', $pincode_id);
+        }
+
+        if ($request->filled('pincode')) {
+          $query->where('pincode', $pincode_id);
         }
 
         // Fetch filtered results
@@ -56,7 +67,7 @@ class CustomerReportController extends Controller
 
         // If no records found, fetch all customers from the user's branch for the current month
         if ($customers->isEmpty()) {
-                $fallbackQuery = Customer::with('branch')
+                $fallbackQuery = Customer::with('branch','customerpincode','customercity')
                 ->where('location_id', $location);
 
                 // Apply status filter if provided
@@ -75,7 +86,7 @@ class CustomerReportController extends Controller
 //dd($customers);
 
 // Pass data to the view
-return view('content.customermanagement.report.index', compact('customers', 'branches', 'fromDate', 'toDate', 'status', 'branchId','role'));
+return view('content.customermanagement.report.index', compact('customers', 'branches', 'fromDate', 'toDate', 'status', 'branchId','role','city','states','pincode','sandhas','ref_customer'));
 
 
 
@@ -132,4 +143,18 @@ return view('content.customermanagement.report.index', compact('customers', 'bra
     {
         //
     }
+
+    public function getCustomerDetails(Request $request)
+{
+    $customer = Customer::find($request->id);
+
+    if ($customer) {
+        return response()->json([
+            'r_phone' => $customer->phone_number,
+            'r_address' => $customer->communication_address,
+        ]);
+    }
+
+    return response()->json(['message' => 'Customer not found.'], 404);
+}
 }

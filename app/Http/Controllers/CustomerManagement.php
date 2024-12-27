@@ -9,8 +9,13 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\LoanHelper;
+use App\Models\Cities;
 use App\Models\Customer;
+use App\Models\District;
 use App\Models\OccupationModel;
+use App\Models\Pincode;
+use App\Models\Sandha;
+use App\Models\State;
 use GuzzleHttp\Psr7\Message;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -39,6 +44,10 @@ class CustomerManagement extends Controller
         // Count customers added this month
         $monthCustomers = $customers->where('created_at', '>=', Carbon::now()->startOfMonth())->count();
 
+
+
+
+
         return view('content.customermanagement.index', compact('customers', 'todayCustomers', 'weekCustomers', 'monthCustomers'));
     }
 
@@ -61,8 +70,14 @@ class CustomerManagement extends Controller
                 $customerId = $locationCode . '-' . str_pad($customerCount + 1, 4, '0', STR_PAD_LEFT);
                 $occupations = OccupationModel::where('status', 'Active')->get();
                 $branchs = Branch::where('status', 'Active')->get();
+                $district = District::where('status', 'Active')->get();
+                $city = Cities::get();
+                $states = State::get();
+                $pincode = Pincode::get();
+                $sandha_details = Sandha::get();
                 $employee = [];
-                return view('content.customermanagement.newcustomer', compact('occupations', 'branchs', 'employee', 'customerId', 'location'));
+                $ref_customers = Customer::get();
+                return view('content.customermanagement.newcustomer', compact('occupations', 'branchs', 'employee', 'customerId', 'location','district','city','states','pincode','sandha_details','ref_customers'));
             } else {
                 return redirect()->route('/login_verfication');
             }
@@ -88,12 +103,12 @@ class CustomerManagement extends Controller
             'marital_status' => 'required',
             'phone_number' => 'required|digits_between:10,13',
             'emergency_number' => 'required|digits_between:10,13',
-            'email_id' => 'nullable|email|unique:customers',
+            /* 'email_id' => 'nullable|email|unique:customers', */
             'city' => 'required',
             'permanent_address' => 'required',
             'communication_address' => 'required',
             'ward' => 'nullable',
-            'aadhar_number' => 'required|digits:16|unique:customers',
+            'aadhar_number' => 'required|digits:12|unique:customers',
             'driving_license_number' => 'nullable',
             'pan' => 'nullable',
             'occupation_id' => 'required|exists:occupation_models,id',
@@ -122,17 +137,23 @@ class CustomerManagement extends Controller
 
         $data = $request->all();
 
+
+
         if ($request->hasFile('customer_photo')) {
-            $data['customer_photo'] = $request->file('customer_photo')->store('photos');
-        }
+          $data['customer_photo'] = $request->file('customer_photo')->store('photos', 'public');
+       }
+
+
 
         if ($request->hasFile('customer_aadharr')) {
-            $data['customer_aadharr'] = $request->file('customer_aadharr')->store('aadhar');
-        }
+          $data['customer_aadharr'] = $request->file('customer_aadharr')->store('photos', 'public');
+       }
+
+
 
         if ($request->hasFile('customer_other')) {
-            $data['customer_other'] = $request->file('customer_other')->store('documents');
-        }
+          $data['customer_other'] = $request->file('customer_other')->store('photos', 'public');
+       }
 
         Customer::create($data);
 
@@ -178,7 +199,7 @@ class CustomerManagement extends Controller
                 'marital_status' => 'required',
                 'phone_number' => 'required|digits_between:10,13',
                 'emergency_number' => 'required|digits_between:10,13',
-                'email_id' => 'nullable|email|unique:customers',
+                /* 'email_id' => 'nullable|email|unique:customers', */
                 'city' => 'required',
                 'permanent_address' => 'required',
                 'communication_address' => 'required',
@@ -212,19 +233,25 @@ class CustomerManagement extends Controller
 
             $data = $request->all();
 
-            if ($request->hasFile('customer_photo')) {
-                $data['customer_photo'] = $request->file('customer_photo')->store('photos');
-            }
 
-            if ($request->hasFile('customer_aadharr')) {
-                $data['customer_aadharr'] = $request->file('customer_aadharr')->store('aadhar');
-            }
+        if ($request->hasFile('customer_photo')) {
+          $data['customer_photo'] = $request->file('customer_photo')->store('photos', 'public');
+       }
 
-            if ($request->hasFile('customer_other')) {
-                $data['customer_other'] = $request->file('customer_other')->store('documents');
-            }
+
+
+        if ($request->hasFile('customer_aadharr')) {
+          $data['customer_aadharr'] = $request->file('customer_aadharr')->store('photos', 'public');
+       }
+
+
+
+        if ($request->hasFile('customer_other')) {
+          $data['customer_other'] = $request->file('customer_other')->store('photos', 'public');
+       }
+
             $customer = Customer::findOrFail($id);
-            $customer->update($request->all());
+            $customer->update($data);
 
             return response()->json(['success' => 'Customer updated successfully']);
         } catch (Exception $e) {
@@ -253,4 +280,18 @@ class CustomerManagement extends Controller
             return response()->json(['success' => false, 'message' => 'User not found.'], 404);
         }
     }
+
+
+
+    public function fetchPincode()
+{
+    $pincodes = Pincode::select('id', 'pin_code', 'name')->get();
+
+    return response()->json($pincodes);
+}
+
+
+
+
+
 }

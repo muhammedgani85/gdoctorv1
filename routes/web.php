@@ -61,9 +61,14 @@ use App\Http\Controllers\CustomerReportController;
 use App\Http\Controllers\TeleCallerController;
 use App\Http\Controllers\TelecallerFollowController;
 use App\Http\Controllers\FundController;
+use App\Http\Controllers\LoanReport;
 use App\Http\Controllers\OtherBankLoanController;
 use App\Http\Controllers\TodayBusinessReport;
 use App\Models\OtherBankLoan;
+use App\Http\Controllers\LoanActionController;
+use App\Http\Controllers\PinCodeController;
+use App\Http\Controllers\SandhaController;
+use App\Models\Sandha;
 
 // Main Page Route
 Route::get('/dashboard', [Analytics::class, 'index'])->name('dashboard-analytics');
@@ -155,11 +160,16 @@ Route::post('/customers/store', [CustomerManagement::class, 'store'])->name('cus
 
 Route::get('customer_report', [CustomerReportController::class, 'index'])->name('customers.report.index');
 
+Route::get('/get-customer-details', [CustomerReportController::class, 'getCustomerDetails']);
+
 //Loan
 // Customer management
 
 Route::get('/customers/show/{id}', [CustomerManagement::class, 'show'])->name('customers/show');
 Route::get('/customers/create', [CustomerManagement::class, 'create'])->name('customers/create');
+
+
+Route::get('/fetch-pincode', [CustomerManagement::class, 'fetchPincode'])->name('fetch.pincode');
 
 // Leave Management
 Route::resource('leaves', LeaveController::class);
@@ -220,6 +230,13 @@ Route::get('/loans/{loan}', [LoanController::class, 'show'])->name('loans.show')
 Route::get('/loans/approvalview/{loan_number}', [LoanController::class, 'approvalView'])->name('loans.approvalview');
 Route::get('/loans/dispatchview/{loan_number}', [LoanController::class, 'dispatchview'])->name('loans.dispatchview');
 
+// Loan Release
+
+Route::post('/release-loan', [LoanController::class, 'releaseLoan'])->name('release-loan');
+Route::get('/release-letter/{id}', [LoanController::class, 'releaseLetter'])->name('release-letter');
+Route::post('/revoke-loan', [LoanController::class, 'revokeLoan'])->name('revoke.loan');
+
+
 
 
 //Route::get('/loans', [LoanManagement::class, 'index'])->name('loans');
@@ -272,4 +289,48 @@ Route::any('/other-bank-interest', [OtherBankLoanController::class, 'interestRem
 
 //Today Business Report
 Route::resource('today_business', TodayBusinessReport::class);
-Route::any('/today_business', [TodayBusinessReport::class, 'index'])->name('today_business.index');
+Route::any('/today_business_custom', [TodayBusinessReport::class, 'index'])->name('today_business_custom.index');
+
+
+
+//Loan Reports
+Route::resource('loan_report', LoanReport::class);
+Route::any('/loan_report', [LoanReport::class, 'index'])->name('today_business.index');
+
+Route::resource('loan_action', LoanActionController::class);
+Route::get('loan_action/{loan_number}', [LoanActionController::class, 'showInterestForm'])->name('loans.customer_interest_list');
+Route::post('loan_action/{loan_number}', [LoanActionController::class, 'storeInterestAction']);
+Route::post('action_customer', [LoanActionController::class, 'ActionCustomer'])->name('loans.action_customer');
+
+
+//Loan Report
+
+Route::get('loan_report', [LoanReport::class, 'index'])->name('loan_report.index');
+
+Route::get('sh_loan_report', [LoanReport::class, 'sh_loan_report'])->name('loan_report.sh_loan_report');
+
+
+//Trending Routes
+
+Route::get('loan-trends', [LoanController::class, 'loanTrends'])->name('loan.trends');
+Route::get('/loan-chart-data', [LoanController::class, 'getLoanChartData'])->name('loan.chart.data');
+Route::get('/loan-wave-chart', [LoanController::class, 'getLoanWaveData'])->name('loan.wave.data');
+
+
+
+// Sandha
+Route::resource('sandhas', SandhaController::class);
+Route::any('/sandhas', [SandhaController::class, 'index'])->name('sandhas.index');
+Route::any('sandhas/create', [SandhaController::class, 'create'])->name('sandhas.create');
+Route::any('sandhas/store', [SandhaController::class, 'store'])->name('sandhas.store');
+Route::delete('/sandhas/softDelete/{id}', [SandhaController::class, 'softDelete'])->name('sandhas.softDelete');
+
+
+
+// Pincode
+// Sandha
+Route::resource('pincodes', PinCodeController::class);
+Route::any('/pincodes', [PinCodeController::class, 'index'])->name('pincodes.index');
+Route::any('pincodes/create', [PinCodeController::class, 'create'])->name('pincodes.create');
+Route::any('pincodes/store', [PinCodeController::class, 'store'])->name('pincodes.store');
+Route::delete('/pincodes/softDelete/{id}', [PinCodeController::class, 'softDelete'])->name('pincodes.softDelete');

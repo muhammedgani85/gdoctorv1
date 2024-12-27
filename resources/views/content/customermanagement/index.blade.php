@@ -5,7 +5,21 @@
 @section('page-script')
 <script src="{{asset('assets/js/form-basic-inputs.js')}}"></script>
 @endsection
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js"></script>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.css">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <style>
   .text-left {
     text-align: left;
@@ -125,10 +139,12 @@
   <div class="card">
     <div class="table-responsive text-nowrap">
 
-      <table class="table" id="usersTable">
-        <thead>
+      <table class="table table-bordered" style="margin-bottom: 20px;" id="usersTable">
+        <thead style="background-color: #aed6f1;">
           <tr>
-            <th>S.No</th>
+            <th
+            style='width:10% !important;'>S.No</th>
+            <th>Photo</th>
             <th>Cust.ID</th>
             <th>Name</th>
             <th>Phone Number</th>
@@ -144,14 +160,21 @@
 
           @foreach ($customers as $user)
           <tr>
-            <td class="text-left">{{ $loop->iteration }}</td>
+            <td  style='width:10% !important;'>{{ $loop->iteration }}</td>
+
+            <td>
+            <img
+    src="{{ $user->customer_photo ? asset('storage/' . $user->customer_photo) : asset('assets/images/sj_logo.png') }}"
+    alt="Image"
+    style="width:50px; height:50px; border-radius:50%;"
+>
+          </td>
             <td class="text-left">{{ $user->customer_id  }}</td>
             <td class="text-left">{{ $user->initial }} {{ $user->first_name }} {{ $user->last_name }} </td>
 
             <td class="text-left">{{ $user->phone_number }}</td>
             <td class="text-left">{{ $user->city }}</td>
-            <!-- <td class="text-left">{{ $user->aadhar_number }}</td> -->
-            <!-- <td class="text-left">{{ getLocationName($user->location_id ) }} </td> -->
+
             <td class="text-left">{{ date('d-m-Y',strtotime($user->created_at)) }}</td>
             <td class="text-left {{ $user->status === 'Active' ? 'text-success' : ($user->status === 'Inactive' ? 'text-warning' : 'text-danger') }}">
               {{ $user->status }}
@@ -175,34 +198,17 @@
 
 
 </div>
-<link rel="stylesheet" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.css">
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-<script src="https://cdn.datatables.net/2.0.3/js/dataTables.js"></script>
-
-
 <script>
-  new DataTable('#usersTable', {
-    "pageLength": 10, // Set default page length
-    "lengthMenu": [5, 10, 25, 50, 75, 100], // Set options for page length
-    "language": {
-      "search": "", // Remove the search label
-      "searchPlaceholder": "Search...", // Optionally, you can add a placeholder
-      "emptyTable": "No data available",
-      "info": "", // Remove the "Showing X to Y of Z entries"
-      "infoEmpty": "", // Remove the "Showing 0 to 0 of 0 entries"
-      "infoFiltered": "", // Remove the "filtered from X total entries"
+new DataTable('#usersTable', {
 
-      "paginate": {
-        "first": "First",
-        "last": "Last",
-        "next": "Next",
-        "previous": "Previous"
-      },
-      "zeroRecords": "No matching records found"
-    },
-    "pagingType": "full_numbers",
-  });
+    lengthMenu: [10, 25, 50, 100],
+});
+
+
 </script>
+
+
+
 <script>
   $(document).ready(function() {
     $('.btn-delete').on("click", function() {

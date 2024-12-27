@@ -151,7 +151,7 @@
             <img
             src="{{ $user->document ? asset('storage/' . $user->document) : asset('storage/default-image.jpg') }}"
             alt="Image"
-            style="width:100px; height:100px;">
+            style="width:50px; height:50px;border-radius:50%;">
 </td>
             <td class="text-left">{{ $user->emp_id }}</td>
             <td class="text-left">{{ $user->initial }} {{ $user->first_name }} {{ $user->last_name }} </td>

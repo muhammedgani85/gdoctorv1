@@ -150,8 +150,6 @@ class UserController extends Controller
         }
 
 
-
-
         if ($request->hasFile('employee_image')) {
              $employee->document = $request->file('employee_image')->store('photos', 'public');
         }

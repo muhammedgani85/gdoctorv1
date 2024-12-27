@@ -3,6 +3,7 @@
 @section('title', 'New Employee')
 
 @section('content')
+
 <h4 class="py-3 mb-4"><span class="text-muted fw-light">Customer Details </span> </h4>
 <form id="customerForm" enctype="multipart/form-data">
   @csrf
@@ -74,6 +75,7 @@
               <option value="Married">Married</option>
               <option value="Single">Single</option>
               <option value="Widow">Widow</option>
+              <option value="None">None</option>
 
             </select>
           </div>
@@ -108,10 +110,53 @@
 
           </div>
           <div class="input-group">
-            <span class="input-group-text">City</span>
-            <input type="text" aria-label="First name" name="city" id="city" class="form-control">
+            <span class="input-group-text">State</span>
+            <select class="form-select" id="state_id" name="state_id">
+              <option selected>Choose...</option>
+              @foreach($states as $state)
+              <option value="{{  $state->id }}">{{ $state->name. "-".$state->name_tamil  }}</option>
+
+              @endforeach
+            </select>
 
           </div>
+          <div class="input-group">
+            <span class="input-group-text">District</span>
+            <select class="form-select" id="district_id" name="district_id">
+              <option selected>Choose...</option>
+              @foreach($district as $dis)
+              <option value="{{  $dis->id }}">{{ $dis->district_name. "-".$dis->district_name_tamil  }}</option>
+
+              @endforeach
+            </select>
+
+          </div>
+
+          <div class="input-group">
+            <span class="input-group-text">City</span>
+            <select class="form-select" id="city" name="city">
+              <option selected>Choose...</option>
+              @foreach($city as $cty)
+              <option value="{{  $cty->id }}">{{ $cty->name. "-".$cty->name_tamil  }}</option>
+
+              @endforeach
+            </select>
+
+          </div>
+
+          <div class="input-group">
+            <span class="input-group-text">Pincode</span>
+            <select class="form-select" id="pincode" name="pincode">
+    <option selected>Choose...</option>
+</select>
+
+
+          </div>
+
+          <!-- Add a loading spinner -->
+<div id="loading-spinner" style="display: none;color:red;">
+    Loading data, please wait...
+</div>
 
 
           <div class="input-group input-group-merge">
@@ -139,7 +184,7 @@
 
           <div class="input-group">
             <span class="input-group-text">Aadhar Number</span>
-            <input type="text" aria-label="First name" name="aadhar_number" id="aadhar_number" class="form-control" onkeypress="return isNumber(event)" onkeypress="return isNumber(event)" maxlength="16" minlength="16">
+            <input type="text" aria-label="First name" name="aadhar_number" id="aadhar_number" class="form-control" onkeypress="return isNumber(event)" onkeypress="return isNumber(event)" maxlength="12" minlength="12">
 
           </div>
 
@@ -206,18 +251,30 @@
         <div class="card-body demo-vertical-spacing demo-only-element">
 
           <div class="input-group">
-            <span class="input-group-text">R.Name1:</span>
-            <input type="text" aria-label="First name" name="r_name" id="r_name" class="form-control">
+          <label class="input-group-text" for="inputGroupSelect01">Ref 1</label>
+
+          <select class="form-select" id="r_name" name="r_name">
+              <option selected>Choose...</option>
+              @foreach ($ref_customers as $refc )
+              <option value="{{ $refc->id }} ">{{ $refc->first_name." - ".$refc->last_name }} </option>
+
+              @endforeach
+
+            </select>
+
+
+
+
 
           </div>
           <div class="input-group">
             <span class="input-group-text">Phone No:</span>
-            <input type="text" aria-label="First name" name="r_phone" id="r_phone" class="form-control">
+            <input type="text" aria-label="First name" name="r_phone" id="r_phone" class="form-control" readonly>
 
           </div>
           <div class="input-group input-group-merge">
             <span class="input-group-text">Address</span>
-            <textarea class="form-control" aria-label="With textarea" name="r_address" id="r_address"></textarea>
+            <textarea class="form-control" aria-label="With textarea" name="r_address" id="r_address" readonly></textarea>
           </div>
 
 
@@ -270,7 +327,7 @@
         </div>
       </div>
 
-      <div class="card mb-4">
+      <div class="card mb-4" style="display:none;">
         <h5 class="card-header">Bank Details</h5>
         <div class="card-body demo-vertical-spacing demo-only-element">
 
@@ -304,6 +361,26 @@
             <input type="text" aria-label="First name" name="gpay_no" id="gpay_no" class="form-control">
 
           </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <h5 class="card-header">Sandha Details</h5>
+        <div class="card-body demo-vertical-spacing demo-only-element">
+
+          <div class="input-group">
+            <span class="input-group-text">Plan</span>
+            <select class="form-select" id="sandha_plan" name="sandha_plan">
+            <option selected>Choose Plan</option>
+            @foreach ($sandha_details as $sandha)
+            <option value="{{ $sandha->id }}">{{ $sandha->sandha_name. " - Duration : ".$sandha->duration." - Price : RS-".$sandha->price }}</option>
+            @endforeach
+
+            </select>
+
+          </div>
+
+
         </div>
       </div>
     </div>
@@ -431,6 +508,91 @@
     });
   });
 </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#pincode').select2({
+                placeholder: 'Search for Pincode...',
+                ajax: {
+                    url: '{{ route("fetch.pincode") }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term // search term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    </script>
+
+<script>
+  $(document).ready(function () {
+    // Event listener for dropdown click
+    $('#pincode').on('click', function () {
+        if ($('#pincode').children('option').length === 1) { // Fetch only if no data loaded yet
+            $('#loading-spinner').show(); // Show loading spinner
+
+            // Simulate AJAX call to fetch data
+            $.ajax({
+                url: '{{ route("fetch.pincode") }}', // Replace with your route
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    $('#loading-spinner').hide(); // Hide loading spinner
+
+                    // Populate dropdown with fetched data
+                    $('#pincode').empty().append('<option selected>Choose...</option>');
+                    $.each(data, function (key, value) {
+                        $('#pincode').append('<option value="' + value.id + '">' + value.pin_code + ' - ' + value.name + '</option>');
+                    });
+                },
+                error: function () {
+                    $('#loading-spinner').hide(); // Hide loading spinner
+                    alert('Failed to fetch data. Please try again later.');
+                }
+            });
+        }
+    });
+});
+
+</script>
+
+<script>
+        $(document).ready(function () {
+            $('#r_name').change(function () {
+                var customerId = $(this).val();
+                if (customerId) {
+                    $.ajax({
+                        url: '/get-customer-details', // Laravel route
+                        type: 'GET',
+                        data: { id: customerId },
+                        cache: false, // Prevent browser caching
+                        success: function (response) {
+                            $('#r_phone').val(response.r_phone);
+                            $('#r_address').val(response.r_address);
+                        },
+                        error: function () {
+                            alert('Failed to fetch customer details.');
+                        }
+                    });
+                } else {
+                    $('#phone_number').val('');
+                    $('#address').val('');
+                }
+            });
+        });
+    </script>
+
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.2.0/sweetalert2.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.2.0/sweetalert2.all.min.js"></script>
 @endsection

@@ -20,7 +20,7 @@ class MenuServiceProvider extends ServiceProvider
    */
   public function boot(): void
   {
-    $main_menus = Menu::get();
+    $main_menus = Menu::where('status', 'Active')->get();
 
     #$formattedData = $menus = Menu::with('subMenus')->get();
 
