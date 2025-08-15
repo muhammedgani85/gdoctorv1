@@ -1,0 +1,3 @@
+name,sku,quantity,low_stock_threshold,price,unit
+Paracetamol,PCT001,100,10,1.5,Tablet
+Ibuprofen,IBU002,50,5,2,Tablet

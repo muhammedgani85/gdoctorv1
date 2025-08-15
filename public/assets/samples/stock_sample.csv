@@ -1,0 +1,4 @@
+name,sku,quantity,low_stock_threshold,price,unit,batch_number
+Paracetamol,SKU001,100,10,1.50,Tablet,BATCH001
+Ibuprofen,SKU002,50,5,2.00,Tablet,BATCH002
+Amoxicillin,SKU003,200,20,3.00,Capsule,BATCH003
